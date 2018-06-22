@@ -1,0 +1,83 @@
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
+def clientSecret = properties.getProperty('clientSecret')
+def clientId = properties.getProperty('clientId')
+
+group 'uk.co.codingentity'
+version '1.0-SNAPSHOT'
+
+apply plugin: 'java'
+apply plugin: 'idea'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+
+    compile 'com.flickr4java:flickr4java:2.17'
+    compile 'com.google.api-client:google-api-client:1.23.0'
+    compile 'com.google.oauth-client:google-oauth-client-jetty:1.23.0'
+    compile 'com.google.apis:google-api-services-gmail:v1-rev83-1.23.0'
+    compile group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.11.0'
+    compile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.11.0'
+
+}
+
+
+sourceSets{
+    generated {
+        java.srcDir "${buildDir}/generated/src/java/"
+    }
+    main {
+        compileClasspath += generated.output
+        runtimeClasspath += generated.output
+    }
+}
+
+task buildZip(type: Zip) {
+    from compileJava
+    from processResources
+    into('lib') {
+        from configurations.runtime
+    }
+}
+
+task generateCredentials() {
+    doLast{
+        File credentialFile = new File("${buildDir}/generated/src/java/AppCredentials.java")
+        credentialFile.getParentFile().mkdirs()
+        Writer fs = new FileWriter(credentialFile)
+        fs.write("package okafixtures;\npublic class AppCredentials{")
+        fs.write("\n\tpublic final static String CLIENT_ID = \"${clientId}\";")
+        fs.write("\n\tpublic final static String CLIENT_SECRET = \"${clientSecret}\";")
+        fs.write("\n}")
+        fs.close()
+    }
+}
+
+compileGeneratedJava {
+    group 'build'
+    dependsOn generateCredentials
+}
+
+compileJava{
+    dependsOn compileGeneratedJava
+    source += sourceSets.generated.java
+}
+
+task printCredentials() {
+    doLast{
+        println("secret=$clientSecret")
+        println("clientid=$clientId")
+    }
+}
+
+
+
+
+build.dependsOn buildZip
