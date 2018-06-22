@@ -26,3 +26,9 @@ hs_err_pid*
 gradle/**
 build/**
 out/**
+.gradle/**
+credentials/**
+local.properties
+*.iml
+*.ipr
+*.iws
