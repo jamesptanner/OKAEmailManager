@@ -12,6 +12,9 @@ import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.GmailScopes;
 import com.google.api.services.gmail.model.*;
+import com.sun.istack.internal.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -24,6 +27,8 @@ import java.util.List;
 
 public class GmailInbox {
 
+    private static final Logger l = LoggerFactory.getLogger(GmailInbox.class);
+
     private static final String APPLICATION_NAME = "Gmail API Java Quickstart";
     private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
     private static final String CREDENTIALS_FOLDER = "credentials"; // Directory to store user credentials.
@@ -33,7 +38,6 @@ public class GmailInbox {
      * If modifying these scopes, delete your previously saved credentials/ folder.
      */
     private static final List<String> SCOPES = Arrays.asList(GmailScopes.GMAIL_LABELS, GmailScopes.GMAIL_READONLY, GmailScopes.GMAIL_METADATA);
-    private static final String CLIENT_SECRET_DIR = "client_secret.json";
     private static final List<String> HEADERS = Arrays.asList("Subject", "From");
     private final Gmail service;
 
@@ -67,20 +71,71 @@ public class GmailInbox {
         return new File(CREDENTIALS_FOLDER).delete();
     }
 
-    public List<String> listLabels() throws IOException {
-        ArrayList<String> returnLabels = new ArrayList<>();
-        ListLabelsResponse listResponse = service.users().labels().list(OUR_USER).execute();
-        List<Label> labels = listResponse.getLabels();
-        if (labels.isEmpty()) {
-            System.out.println("No labels found.");
-        } else {
-            System.out.println("Labels:");
-            for (Label label : labels) {
-                System.out.printf("- %s\n", label.getName());
-                returnLabels.add(label.getName());
-            }
+    public void createLabel(String labelName) {
+        try {
+            Label newLabel = new Label().setName(labelName);
+            service.users().labels().create(OUR_USER, newLabel).execute();
+        } catch (IOException e) {
+            l.error("Failed to create new label", e);
         }
-        return returnLabels;
+    }
+
+    public void deleteLabel(String labelName) {
+        try {
+            service.users().labels().delete(OUR_USER, labelName).execute();
+        } catch (IOException e) {
+            l.error("Failed to delete label", e);
+        }
+
+    }
+
+    public void addLabelToMessage(List<Message> msgs, List<String> label) {
+        setLabelsOnMessage(msgs, label, null);
+
+    }
+
+    public void removeLabelsFromMessage(List<Message> msgs, List<String> label) {
+        setLabelsOnMessage(msgs, null, label);
+    }
+
+    private void setLabelsOnMessage(List<Message> msgIds, List<String> addLabel, List<String> removeLabel) {
+        ArrayList<String> msgIdStrings = new ArrayList<>();
+        msgIds.forEach(msg -> msgIdStrings.add(msg.getId()));
+        setLabelsOnMessageIds(msgIdStrings, addLabel, removeLabel);
+    }
+
+    private void setLabelsOnMessageIds(List<String> msgIds, List<String> addLabel, List<String> removeLabel) {
+        try {
+            BatchModifyMessagesRequest mod = new BatchModifyMessagesRequest()
+                    .setIds(msgIds)
+                    .setAddLabelIds(addLabel)
+                    .setRemoveLabelIds(removeLabel);
+            service.users().messages().batchModify(OUR_USER, mod).execute();
+        } catch (IOException e) {
+            l.error("Failed to update labels", e);
+        }
+    }
+
+    @NotNull
+    public List<String> listLabels() {
+        try {
+            ArrayList<String> returnLabels = new ArrayList<>();
+            ListLabelsResponse listResponse = service.users().labels().list(OUR_USER).execute();
+            List<Label> labels = listResponse.getLabels();
+            if (labels.isEmpty()) {
+                l.warn("No labels found.");
+            } else {
+                l.trace("Labels:");
+                for (Label label : labels) {
+                    l.trace("- %s\n", label.getName());
+                    returnLabels.add(label.getName());
+                }
+            }
+            return returnLabels;
+        } catch (IOException e) {
+            l.error("Failed to list labels", e);
+        }
+        return new ArrayList<>();
     }
 
     public void getEmailSubjects() throws IOException {
@@ -92,17 +147,15 @@ public class GmailInbox {
         } else {
             System.out.println("Messages:");
             for (Message msg : messages) {
-                System.out.println(msg.toPrettyString() + ":");
+                System.out.println(msg.getId() + ":");
                 Message meta = getMessageMeta(msg);
                 if (meta != null) {
                     MessagePart payload = meta.getPayload();
                     if (payload != null) {
                         List<MessagePartHeader> headers = payload.getHeaders();
                         for (MessagePartHeader header : headers) {
-                            switch (header.getName()) {
-                                case "Subject":
-                                case "From":
-                                    System.out.println(header.getName() + ":" + header.getValue());
+                            if (HEADERS.contains(header.getName())) {
+                                System.out.println(header.getName() + ":" + header.getValue());
                             }
                         }
                     }
@@ -114,7 +167,7 @@ public class GmailInbox {
     @Nullable
     private Message getMessageMeta(Message msg) {
         try {
-            return service.users().messages().get(OUR_USER, msg.getId()).execute();
+            return service.users().messages().get(OUR_USER, msg.getId()).setFormat("metadata").execute();
         } catch (IOException e) {
             e.printStackTrace();
         }
