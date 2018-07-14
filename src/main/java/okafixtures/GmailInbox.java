@@ -73,7 +73,9 @@ public class GmailInbox {
 
     public void createLabel(String labelName) {
         try {
-            Label newLabel = new Label().setName(labelName);
+            Label newLabel = new Label().setName(labelName)
+                    .setLabelListVisibility("labelShow")
+                    .setMessageListVisibility("show");
             service.users().labels().create(OUR_USER, newLabel).execute();
         } catch (IOException e) {
             l.error("Failed to create new label", e);
@@ -82,7 +84,17 @@ public class GmailInbox {
 
     public void deleteLabel(String labelName) {
         try {
-            service.users().labels().delete(OUR_USER, labelName).execute();
+            List<Label> labels = getRawLabels();
+            if (labels.isEmpty()) {
+                l.warn("No labels found.");
+            } else {
+                for (Label label : labels) {
+                    if (label.getName().equals(labelName)) {
+                        service.users().labels().delete(OUR_USER, label.getId()).execute();
+                        return;
+                    }
+                }
+            }
         } catch (IOException e) {
             l.error("Failed to delete label", e);
         }
@@ -116,27 +128,34 @@ public class GmailInbox {
         }
     }
 
-    @NotNull
-    public List<String> listLabels() {
+    private List<Label> getRawLabels() {
         try {
-            ArrayList<String> returnLabels = new ArrayList<>();
+
             ListLabelsResponse listResponse = service.users().labels().list(OUR_USER).execute();
-            List<Label> labels = listResponse.getLabels();
-            if (labels.isEmpty()) {
-                l.warn("No labels found.");
-            } else {
-                l.trace("Labels:");
-                for (Label label : labels) {
-                    l.trace("- %s\n", label.getName());
-                    returnLabels.add(label.getName());
-                }
-            }
-            return returnLabels;
+            return listResponse.getLabels();
+
         } catch (IOException e) {
             l.error("Failed to list labels", e);
         }
         return new ArrayList<>();
     }
+
+    @NotNull
+    public List<String> listLabels() {
+        ArrayList<String> returnLabels = new ArrayList<>();
+        List<Label> labels = getRawLabels();
+        if (labels.isEmpty()) {
+            l.warn("No labels found.");
+        } else {
+            l.trace("Labels:");
+            for (Label label : labels) {
+                l.trace("- %s\n", label.getName());
+                returnLabels.add(label.getName());
+            }
+        }
+        return returnLabels;
+    }
+
 
     public void getEmailSubjects() throws IOException {
         ListMessagesResponse listResponse = service.users().messages().list(OUR_USER).execute();

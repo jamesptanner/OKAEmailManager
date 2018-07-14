@@ -12,6 +12,7 @@ import java.util.List;
 public class GmailInboxTest {
     private static final Logger l = LoggerFactory.getLogger(GmailInboxTest.class);
     private GmailInbox inbox;
+    private final String newLabel = "NewLabelString";
 
     @Before
     public void setup() {
@@ -20,7 +21,7 @@ public class GmailInboxTest {
         GmailInbox.clearCredentials();
         try {
             inbox = new GmailInbox();
-
+            inbox.deleteLabel(newLabel);
         } catch (GeneralSecurityException | IOException e) {
             e.printStackTrace();
         }
@@ -42,5 +43,15 @@ public class GmailInboxTest {
         l.info("Testing Labels");
         List<String> labels = inbox.listLabels();
         Assert.assertTrue("Check that we can retrieve message labels", !labels.isEmpty());
+        final int currentLabelCount = labels.size();
+        inbox.createLabel(newLabel);
+        List<String> newLabels = inbox.listLabels();
+        Assert.assertEquals("We have created a new label", newLabels.size(), currentLabelCount + 1);
+        Assert.assertTrue("The new label is in the list.", newLabels.contains(newLabel));
+        inbox.deleteLabel(newLabel);
+        newLabels = inbox.listLabels();
+        Assert.assertEquals("We have removed a new label", newLabels.size(), currentLabelCount);
+        Assert.assertTrue("The new label is not in the list.", !newLabels.contains(newLabel));
+
     }
 }
