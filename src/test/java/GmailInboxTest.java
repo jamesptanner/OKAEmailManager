@@ -1,3 +1,4 @@
+import com.google.api.services.gmail.model.Message;
 import okafixtures.GmailInbox;
 import org.junit.Assert;
 import org.junit.Before;
@@ -31,7 +32,14 @@ public class GmailInboxTest {
     public void test() {
 
         try {
-            inbox.getEmailSubjects();
+            //inbox.getEmailSubjects();
+            List<Message> notProcessed = inbox.getMessagesByQuery("-label:Dealt With");
+            List<Message> processed = inbox.getMessagesByQuery("label:Dealt With");
+            List<Message> all = inbox.getAllMessages();
+            Assert.assertNotNull("We have emails we have dealt with", processed);
+            Assert.assertNotNull("We have emails we haven't dealt with", notProcessed);
+            Assert.assertNotNull("We have all emails", all);
+            Assert.assertEquals("total message add up.", all.size(), notProcessed.size() + processed.size());
         } catch (Exception e) {
             Assert.fail(e.getMessage());
 

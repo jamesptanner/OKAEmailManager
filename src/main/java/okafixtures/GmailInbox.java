@@ -37,7 +37,7 @@ public class GmailInbox {
      * Global instance of the scopes required by this quickstart.
      * If modifying these scopes, delete your previously saved credentials/ folder.
      */
-    private static final List<String> SCOPES = Arrays.asList(GmailScopes.GMAIL_LABELS, GmailScopes.GMAIL_READONLY, GmailScopes.GMAIL_METADATA);
+    private static final List<String> SCOPES = Arrays.asList(GmailScopes.GMAIL_LABELS, GmailScopes.GMAIL_READONLY, GmailScopes.GMAIL_COMPOSE);
     private static final List<String> HEADERS = Arrays.asList("Subject", "From");
     private final Gmail service;
 
@@ -213,8 +213,17 @@ public class GmailInbox {
     @Nullable
     public List<Message> getAllMessages() {
         try {
-            ListMessagesResponse listResponse = service.users().messages().list(OUR_USER).execute();
-            List<Message> messages = listResponse.getMessages();
+            ArrayList<Message> messages = new ArrayList<>();
+            ListMessagesResponse listResponse;
+            listResponse = service.users().messages().list(OUR_USER).execute();
+
+            while (listResponse.getMessages() != null) {
+                messages.addAll(listResponse.getMessages());
+                if (listResponse.getNextPageToken() != null) {
+                    String pageToken = listResponse.getNextPageToken();
+                    listResponse = service.users().messages().list(OUR_USER).setPageToken(pageToken).execute();
+                } else break;
+            }
             if (messages.isEmpty()) {
                 return null;
             }
@@ -229,7 +238,14 @@ public class GmailInbox {
     public List<Message> getMessagesByQuery(String query) {
         try {
             ListMessagesResponse listResponse = service.users().messages().list(OUR_USER).setQ(query).execute();
-            List<Message> messages = listResponse.getMessages();
+            ArrayList<Message> messages = new ArrayList<>();
+            while (listResponse.getMessages() != null) {
+                messages.addAll(listResponse.getMessages());
+                if (listResponse.getNextPageToken() != null) {
+                    String pageToken = listResponse.getNextPageToken();
+                    listResponse = service.users().messages().list(OUR_USER).setPageToken(pageToken).execute();
+                } else break;
+            }
             if (messages.isEmpty()) {
                 return null;
             }
