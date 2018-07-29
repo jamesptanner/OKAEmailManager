@@ -20,25 +20,27 @@ public class EmailProcessor {
     public boolean addProcessor(JSONObject processor) {
         String logicString = processor.optString("logic");
         RuleLogic logic = RuleLogic.ANY;
-        if (logicString != null) {
+        if (!logicString.isEmpty()) {
             try {
                 logic = RuleLogic.valueOf(logicString.toUpperCase());
             } catch (IllegalArgumentException e) {
-                l.warn("Could not identify rule logic:" + logicString);
+                l.error("Could not identify rule logic:" + logicString);
+                return false;
             }
 
         }
         JSONObject rules = processor.optJSONObject("rules");
         ArrayMap<RuleTarget, String> rulesMap = new ArrayMap<>();
-        for (String key : rules.keySet()) {
-            RuleTarget target = null;
-            try {
-                target = RuleTarget.valueOf(key);
-            } catch (IllegalArgumentException e) {
-                l.warn("Could not process rule target: " + key);
-            }
+        if (rules != null && rules.length() > 0) {
+            for (String key : rules.keySet()) {
+                RuleTarget target;
+                try {
+                    target = RuleTarget.valueOf(key.toUpperCase());
+                } catch (IllegalArgumentException e) {
+                    l.error("Could not process rule target: " + key);
+                    return false;
+                }
 
-            if (target != null) {
                 // we have a target so lets store the rule.
                 rulesMap.put(target, rules.optString(key));
             }
@@ -50,7 +52,6 @@ public class EmailProcessor {
         return true;
 
     }
-
 
     public enum RuleTarget {
         SENDER,
