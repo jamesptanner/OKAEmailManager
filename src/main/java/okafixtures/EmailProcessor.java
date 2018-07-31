@@ -1,6 +1,7 @@
 package okafixtures;
 
 import com.google.api.client.util.ArrayMap;
+import com.google.api.services.gmail.model.Message;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,6 +77,17 @@ public class EmailProcessor {
 
     }
 
+    public boolean ProcessMessage(Message msg) {
+        boolean res = false;
+        for (Processor processor : processors) {
+            if (processor.shouldRunAction(msg)) {
+                res = true;
+                processor.runActions(msg);
+            }
+        }
+        return res;
+    }
+
     private enum RuleLogic {
         ANY,
         ALL
@@ -106,7 +118,7 @@ public class EmailProcessor {
             m_actions = actions;
         }
 
-        private boolean shouldRunRule() {
+        private boolean shouldRunAction(Message msg) {
             int matches = 0;
             for (RuleTarget target : m_rules.keySet()) {
                 String rule = m_rules.get(target);
@@ -130,6 +142,30 @@ public class EmailProcessor {
 
             }
             return (m_logic == RuleLogic.ALL) ? m_rules.size() == matches : matches > 0;
+        }
+
+        private void runActions(Message msg) {
+            for (Action action : m_actions.keySet()) {
+                String args = m_actions.get(action);
+                switch (action) {
+                    case EMAIL_LABEL: {
+
+                    }
+                    break;
+                    case EMAIL_DELETE: {
+
+                    }
+                    break;
+                    case EMAIL_FORWARD: {
+
+                    }
+                    break;
+                    case EMAIL_RESPOND: {
+
+                    }
+                    break;
+                }
+            }
         }
     }
 }
