@@ -19,14 +19,27 @@ public class EmailProcessor {
         m_inbox = null;
     }
 
+    /**
+     * Contructor for the email processor.
+     *
+     * @param inbox inbox object that is used to perform email actions on.
+     */
     EmailProcessor(GmailInbox inbox) {
         m_inbox = inbox;
         List<Message> configMessages = m_inbox.getMessagesByQuery("label:config");
-        for (Message msg : configMessages) {
-            msg.getPayload().getBody().getData();
+        if (configMessages.size() > 0) {
+            for (Message msg : configMessages) {
+                msg.getPayload().getBody().getData();
+            }
         }
     }
 
+    /**
+     * Adds a new processor to the list that will be used to process any messages that arrive.
+     *
+     * @param processor The JSON object that contains the definition for the processor.
+     * @return True if the processor was successfully parsed. Fail if there was a problem.
+     */
     public boolean addProcessor(JSONObject processor) {
         //figure out the logic
         String logicString = processor.optString("logic");
@@ -91,6 +104,11 @@ public class EmailProcessor {
 
     }
 
+    /**
+     * Runs a message agains the processors that are registered in the class.
+     * @param msg
+     * @return True fi there was a processor that handled the message, otherwise false.
+     */
     public boolean ProcessMessage(Message msg) {
         boolean res = false;
         for (Processor processor : processors) {
@@ -121,9 +139,19 @@ public class EmailProcessor {
         EMAIL_RESPOND
     }
 
+    /**
+     * Class defining the logic processor.
+     */
     public class Processor {
+        /**
+         * list of rules that the message must match to be handled by this processor object.
+         */
         final Map<RuleTarget, String> m_rules;
+        /**
+         * Indicated if all the rules should match, or at least one.
+         */
         final RuleLogic m_logic;
+        /
         final Map<Action, String> m_actions;
 
         Processor(Map<RuleTarget, String> rules, RuleLogic logic, Map<Action, String> actions) {
