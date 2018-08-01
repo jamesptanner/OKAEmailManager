@@ -20,10 +20,7 @@ import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class GmailInbox {
 
@@ -257,12 +254,31 @@ public class GmailInbox {
 
     }
 
+    private Message getFullMessage(Message msg) {
+        try {
+            return service.users().messages().get(OUR_USER, msg.getId()).setFormat("full").execute();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+    }
     public String getMessageSubject(Message msg) {
         return getMessageHeader(msg, "Subject");
     }
 
     public String getMessageFrom(Message msg) {
         return getMessageHeader(msg, "From");
+
+    }
+
+    public String getMessageBody(Message msg) {
+        if (msg.getPayload() == null) {
+            msg = getFullMessage(msg);
+        }
+
+        //think that this will only work for messages, not sure if attachments will be in the parts aswell.
+        return new String(Base64.getDecoder().decode(msg.getPayload().getParts().get(0).getBody().getData()));
 
     }
 }

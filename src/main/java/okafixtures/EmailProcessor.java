@@ -7,11 +7,25 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class EmailProcessor {
+    private final GmailInbox m_inbox;
     private Logger l = LoggerFactory.getLogger(this.getClass());
     private ArrayList<Processor> processors = new ArrayList<>();
+
+    public EmailProcessor() {
+        m_inbox = null;
+    }
+
+    EmailProcessor(GmailInbox inbox) {
+        m_inbox = inbox;
+        List<Message> configMessages = m_inbox.getMessagesByQuery("label:config");
+        for (Message msg : configMessages) {
+            msg.getPayload().getBody().getData();
+        }
+    }
 
     public boolean addProcessor(JSONObject processor) {
         //figure out the logic

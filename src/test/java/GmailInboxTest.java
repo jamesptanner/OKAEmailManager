@@ -62,4 +62,6 @@ public class GmailInboxTest {
         Assert.assertTrue("The new label is not in the list.", !newLabels.contains(newLabel));
 
     }
+
+
 }
