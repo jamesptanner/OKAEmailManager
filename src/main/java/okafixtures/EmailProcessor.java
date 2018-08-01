@@ -21,7 +21,6 @@ public class EmailProcessor {
 
     /**
      * Contructor for the email processor.
-     *
      * @param inbox inbox object that is used to perform email actions on.
      */
     EmailProcessor(GmailInbox inbox) {
@@ -36,7 +35,6 @@ public class EmailProcessor {
 
     /**
      * Adds a new processor to the list that will be used to process any messages that arrive.
-     *
      * @param processor The JSON object that contains the definition for the processor.
      * @return True if the processor was successfully parsed. Fail if there was a problem.
      */
@@ -151,15 +149,29 @@ public class EmailProcessor {
          * Indicated if all the rules should match, or at least one.
          */
         final RuleLogic m_logic;
-        /
+        /**
+         * Actions that are performed when the messages matches the rules.
+         */
         final Map<Action, String> m_actions;
 
+        /**
+         * constructor for the processor.
+         *
+         * @param rules   list of rules to match against
+         * @param logic   whether we match against any or all of the rules.
+         * @param actions list of actions to do when the rules are matched correctly
+         */
         Processor(Map<RuleTarget, String> rules, RuleLogic logic, Map<Action, String> actions) {
             m_rules = rules;
             m_logic = logic;
             m_actions = actions;
         }
 
+        /**
+         * Processses message against rule to see if the actions should run.
+         * @param msg The message to process
+         * @return True if we should process the message with these actions or false if we do not.
+         */
         private boolean shouldRunAction(Message msg) {
             int matches = 0;
             for (RuleTarget target : m_rules.keySet()) {
@@ -186,6 +198,10 @@ public class EmailProcessor {
             return (m_logic == RuleLogic.ALL) ? m_rules.size() == matches : matches > 0;
         }
 
+        /**
+         * Runs the actions against the message.
+         * @param msg Message that is being processed.
+         */
         private void runActions(Message msg) {
             for (Action action : m_actions.keySet()) {
                 String args = m_actions.get(action);
