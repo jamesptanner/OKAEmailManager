@@ -15,6 +15,9 @@ public class EmailProcessor {
     private Logger l = LoggerFactory.getLogger(this.getClass());
     private ArrayList<Processor> processors = new ArrayList<>();
 
+    /**
+     * Default constructor that sets the inbox to null. used for testing without processing messages.
+     */
     public EmailProcessor() {
         m_inbox = null;
     }
