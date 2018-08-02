@@ -64,10 +64,19 @@ public class GmailInbox {
         return new AuthorizationCodeInstalledApp(flow, new LocalServerReceiver()).authorize("user");
     }
 
+    /**
+     * Removes the credentials from the machine so that a retrieved the next time they are used.
+     *
+     * @return
+     */
     public static boolean clearCredentials() {
         return new File(CREDENTIALS_FOLDER).delete();
     }
 
+    /**
+     * Creates a new label in the gmail account.
+     * @param labelName Name of the new label.
+     */
     public void createLabel(String labelName) {
         try {
             Label newLabel = new Label().setName(labelName)
@@ -79,6 +88,10 @@ public class GmailInbox {
         }
     }
 
+    /**
+     * deletes the lable from the gmail account
+     * @param labelName name of the label to delete.
+     */
     public void deleteLabel(String labelName) {
         try {
             List<Label> labels = getRawLabels();
@@ -98,21 +111,44 @@ public class GmailInbox {
 
     }
 
+    /**
+     * Adds a label to a list of messages.
+     * @param msgs list of messages to add the label to.
+     * @param label label to add to the
+     */
     public void addLabelToMessage(List<Message> msgs, List<String> label) {
         setLabelsOnMessage(msgs, label, null);
 
     }
 
+    /**
+     * Removes a label from multiple messages
+     * @param msgs messages to remove label from.
+     * @param label the label to remove
+     */
     public void removeLabelsFromMessage(List<Message> msgs, List<String> label) {
         setLabelsOnMessage(msgs, null, label);
     }
 
-    private void setLabelsOnMessage(List<Message> msgIds, List<String> addLabel, List<String> removeLabel) {
+    /**
+     * adds and removes labels from messages
+     *
+     * @param msgs        Messages to set the labels on.
+     * @param addLabel    Labels to add to messages.
+     * @param removeLabel labels to remove from messages.
+     */
+    private void setLabelsOnMessage(List<Message> msgs, List<String> addLabel, List<String> removeLabel) {
         ArrayList<String> msgIdStrings = new ArrayList<>();
-        msgIds.forEach(msg -> msgIdStrings.add(msg.getId()));
+        msgs.forEach(msg -> msgIdStrings.add(msg.getId()));
         setLabelsOnMessageIds(msgIdStrings, addLabel, removeLabel);
     }
 
+    /**
+     * Sets the labels for a messageId
+     * @param msgIds list of message ids to update
+     * @param addLabel list of labels to add to the messages
+     * @param removeLabel list of labels to remove from the messages.
+     */
     private void setLabelsOnMessageIds(List<String> msgIds, List<String> addLabel, List<String> removeLabel) {
         try {
             BatchModifyMessagesRequest mod = new BatchModifyMessagesRequest()
@@ -125,6 +161,10 @@ public class GmailInbox {
         }
     }
 
+    /**
+     * gets the list of label objects.
+     * @return List of label objects.
+     */
     private List<Label> getRawLabels() {
         try {
 
@@ -137,6 +177,10 @@ public class GmailInbox {
         return new ArrayList<>();
     }
 
+    /**
+     * Gets list of labels
+     * @return List of the labels as a string.6
+     */
     @NotNull
     public List<String> listLabels() {
         ArrayList<String> returnLabels = new ArrayList<>();
