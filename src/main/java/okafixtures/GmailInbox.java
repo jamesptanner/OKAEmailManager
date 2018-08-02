@@ -153,33 +153,6 @@ public class GmailInbox {
         return returnLabels;
     }
 
-
-    public void getEmailSubjects() throws IOException {
-        ListMessagesResponse listResponse = service.users().messages().list(OUR_USER).execute();
-        List<Message> messages = listResponse.getMessages();
-        if (messages.isEmpty()) {
-            System.out.println("no Messages");
-
-        } else {
-            System.out.println("Messages:");
-            for (Message msg : messages) {
-                System.out.println(msg.getId() + ":");
-                Message meta = getMessageMeta(msg);
-                if (meta != null) {
-                    MessagePart payload = meta.getPayload();
-                    if (payload != null) {
-                        List<MessagePartHeader> headers = payload.getHeaders();
-                        for (MessagePartHeader header : headers) {
-                            if (HEADERS.contains(header.getName())) {
-                                System.out.println(header.getName() + ":" + header.getValue());
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     @Nullable
     private Message getMessageMeta(Message msg) {
         try {
