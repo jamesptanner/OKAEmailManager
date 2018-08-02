@@ -12,7 +12,6 @@ import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.GmailScopes;
 import com.google.api.services.gmail.model.*;
-import com.sun.istack.internal.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,7 +66,7 @@ public class GmailInbox {
     /**
      * Removes the credentials from the machine so that a retrieved the next time they are used.
      *
-     * @return
+     * @return true if we are able to clear the credentials.
      */
     public static boolean clearCredentials() {
         return new File(CREDENTIALS_FOLDER).delete();
@@ -181,7 +180,6 @@ public class GmailInbox {
      * Gets list of labels
      * @return List of the labels as a string.6
      */
-    @NotNull
     public List<String> listLabels() {
         ArrayList<String> returnLabels = new ArrayList<>();
         List<Label> labels = getRawLabels();
@@ -197,6 +195,12 @@ public class GmailInbox {
         return returnLabels;
     }
 
+    /**
+     * gets the metadata for the message.
+     *
+     * @param msg message to get metadata for.
+     * @return The message with metadata applied.
+     */
     @Nullable
     private Message getMessageMeta(Message msg) {
         try {
@@ -207,6 +211,12 @@ public class GmailInbox {
         return null;
     }
 
+    /**
+     * Gets a header from the message
+     * @param msg Message to get the header for.
+     * @param header The header to get
+     * @return The string containing the header details. if the header doesnt exist then it returns null;
+     */
     private String getMessageHeader(Message msg, String header) {
         try {
             Message headers = service.users().messages().get(OUR_USER, msg.getId()).setMetadataHeaders(Collections.singletonList(header)).execute();
@@ -224,6 +234,10 @@ public class GmailInbox {
         return null;
     }
 
+    /**
+     * Gets all of the messages with the account.
+     * @return List of messages.
+     */
     @Nullable
     public List<Message> getAllMessages() {
         try {
@@ -248,6 +262,11 @@ public class GmailInbox {
         }
     }
 
+    /**
+     * Gets messages that matches the provided query.
+     * @param query Query string that is used to filter the emails.
+     * @return List of messages that match the query.
+     */
     @Nullable
     public List<Message> getMessagesByQuery(String query) {
         try {
@@ -271,6 +290,11 @@ public class GmailInbox {
 
     }
 
+    /**
+     * Gets the full content of the message.
+     * @param msg Message to get the content for.
+     * @return Message with its full content
+     */
     private Message getFullMessage(Message msg) {
         try {
             return service.users().messages().get(OUR_USER, msg.getId()).setFormat("full").execute();
@@ -280,15 +304,31 @@ public class GmailInbox {
         }
 
     }
+
+    /**
+     * Gets the subject from the message.
+     * @param msg Message to get the subject for.
+     * @return Message header string
+     */
     public String getMessageSubject(Message msg) {
         return getMessageHeader(msg, "Subject");
     }
 
+    /**
+     * gets the from field for the message.
+     * @param msg Message to get the from field.
+     * @return The sender of the message.
+     */
     public String getMessageFrom(Message msg) {
         return getMessageHeader(msg, "From");
 
     }
 
+    /**
+     * Gets the body of the message.
+     * @param msg Message of the body.
+     * @return The decoded message body.
+     */
     public String getMessageBody(Message msg) {
         if (msg.getPayload() == null) {
             msg = getFullMessage(msg);

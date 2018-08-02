@@ -107,7 +107,7 @@ public class EmailProcessor {
 
     /**
      * Runs a message agains the processors that are registered in the class.
-     * @param msg
+     * @param msg message to process.
      * @return True fi there was a processor that handled the message, otherwise false.
      */
     public boolean ProcessMessage(Message msg) {
